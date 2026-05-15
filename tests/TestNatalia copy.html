@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agricultura Urbana AR</title>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <link rel="stylesheet" href="../Styles/Design1.css">
+  </head>
+  <body>
+    <div id="ar-container">
+      <div id="scan-effect"></div>
+    </div>
+
+    <div class="hud">
+      <section class="panel controls status">
+        <button id="start-ar" class="camera-toggle" type="button" data-state="idle">
+          <img class="camera-icon" src="../Assets/svg/camera-ON.svg" alt="">
+          <span class="button-divider" aria-hidden="true"></span>
+          <span class="camera-label">Iniciar c&aacute;mara AR</span>
+        </button>
+
+        <div class="tap-hint" aria-hidden="true">
+          <img src="../Assets/svg/arrow2.svg" alt="">
+          <p><strong>Toca aqu&iacute; para iniciar</strong><br>la experiencia AR</p>
+        </div>
+      </section>
+    </div>
+
+    <div id="ui-loading">
+      <div class="scanner-badge">
+        <img src="../Assets/svg/food-hot.svg" alt="">
+      </div>
+      <h1>Listo para comenzar</h1>
+      <span class="loading-line"></span>
+      <p id="status-text">Activa tu c&aacute;mara para escanear el entorno y descubrir cultivos urbanos.</p>
+    </div>
+
+    <div id="ar-ui">
+      <button id="btn-change"><span>COMER</span></button>
+
+      <div id="ui-camera" class="ar-state" style="display:none;">
+        Por favor permite el acceso a la c&aacute;mara
+      </div>
+
+      <div id="ui-scanning" class="ar-state" style="display:none;">
+        Busca la imagen objetivo con la c&aacute;mara
+      </div>
+
+      <div id="ui-detected" class="ar-state" style="display:none;">
+        &iexcl;Target detectado!
+      </div>
+    </div>
+
+    <script type="module" src="../JS/TestNatalia.js"></script>
+  </body>
+</html>

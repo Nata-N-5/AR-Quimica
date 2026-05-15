@@ -14,6 +14,7 @@ const uiLoading = document.querySelector('#ui-loading');
 const uiCamera = document.querySelector('#ui-camera');
 const uiScanning = document.querySelector('#ui-scanning');
 const uiDetected = document.querySelector('#ui-detected');
+const loadingTitle = uiLoading.querySelector('h1');
 
 const eatSound = new Audio('../Assets/eat.mp3');
 const gltfLoader = new GLTFLoader();
@@ -25,12 +26,12 @@ const targetConfigs = [
     targetIndex: 0,
     title: 'ZANAHORIA',
     statusLabel: 'zanahoria',
-    skeletonPath: '../Assets/carrotw.glb',
+    skeletonPath: '../Assets/models/carrotw.glb',
     models: [
-      '../Assets/carrot2.glb',
-      '../Assets/carrot3.glb',
-      '../Assets/carrot4.glb',
-      '../Assets/carrot5.glb'
+      '../Assets/models/carrot2.glb',
+      '../Assets/models/carrot3.glb',
+      '../Assets/models/carrot4.glb',
+      '../Assets/models/carrot5.glb'
     ],
     stats: [
       { label: 'Vitamina A', value: 80 },
@@ -42,9 +43,12 @@ const targetConfigs = [
     targetIndex: 1,
     title: 'PAPA',
     statusLabel: 'papa',
-    skeletonPath: '../Assets/papa2.glb',
+    skeletonPath: '../Assets/models/papaw.glb',
     models: [
-      '../Assets/papa2.glb'
+      '../Assets/models/papa2.glb',
+      '../Assets/models/papa3.glb',
+      '../Assets/models/papa4.glb',
+      '../Assets/models/papa5.glb'
     ],
     stats: [
       { label: 'Potasio', value: 76 },
@@ -81,6 +85,8 @@ const setControlState = (state) => {
     startButton.disabled = true;
     cameraLabel.textContent = 'Iniciando camara AR';
     cameraIcon.src = '../Assets/svg/camera-ON.svg';
+    loadingTitle.textContent = 'Cargando';
+    document.body.classList.add('ar-starting');
     document.body.classList.remove('ar-active', 'ar-paused');
     return;
   }
@@ -91,7 +97,7 @@ const setControlState = (state) => {
     cameraLabel.textContent = 'Pausar camara AR';
     cameraIcon.src = '../Assets/svg/camera-OFF.svg';
     document.body.classList.add('ar-active');
-    document.body.classList.remove('ar-paused');
+    document.body.classList.remove('ar-paused', 'ar-starting');
     return;
   }
 
@@ -100,12 +106,15 @@ const setControlState = (state) => {
     cameraIcon.src = '../Assets/svg/camera-ON.svg';
     document.body.classList.remove('ar-active');
     document.body.classList.add('ar-paused');
+    document.body.classList.remove('ar-starting');
+    loadingTitle.textContent = 'Listo para comenzar';
     return;
   }
 
   cameraLabel.textContent = 'Iniciar camara AR';
   cameraIcon.src = '../Assets/svg/camera-ON.svg';
-  document.body.classList.remove('ar-active', 'ar-paused');
+  document.body.classList.remove('ar-active', 'ar-paused', 'ar-starting');
+  loadingTitle.textContent = 'Listo para comenzar';
 };
 
 const loadGltf = (path) => {
@@ -234,7 +243,7 @@ const createParticles = (state, position) => {
 };
 
 const resetSteamParticle = (particle, firstRun = false) => {
-  const radius = 0.24;
+  const radius = 0.4;
   const angle = Math.random() * Math.PI * 2;
   const distance = Math.random() * radius;
 
@@ -249,9 +258,9 @@ const resetSteamParticle = (particle, firstRun = false) => {
   particle.userData.life = firstRun ? Math.random() : 0;
   particle.userData.speed = 0.004 + Math.random() * 0.004;
   particle.userData.drift = new THREE.Vector3(
-    (Math.random() - 0.5) * 0.003,
+    (Math.random() - 0.5) * 0.005,
     0,
-    (Math.random() - 0.5) * 0.003
+    (Math.random() - 0.5) * 0.005
   );
 };
 
@@ -486,45 +495,74 @@ const hideTargetUi = (state) => {
   scanEffect.style.display = 'none';
 };
 
+const handleTargetFound = (state) => {
+  if (state.isVisible) return;
+
+  state.isVisible = true;
+  showTargetUi(state);
+  updateStatus('Target de ' + state.config.statusLabel + ' detectado.');
+
+  if (!state.infoPanel) {
+    state.infoPanel = createInfoPanel(state.config);
+    state.anchor.group.add(state.infoPanel);
+  }
+
+  scanEffect.style.display = 'block';
+
+  if (state.loadTimeout || state.currentModel || state.skeletonModel) return;
+
+  loadSkeleton(state).catch((error) => {
+    console.error('Error al cargar skeleton:', error);
+    updateStatus('No se pudo cargar el placeholder de ' + state.config.statusLabel + '.');
+  });
+
+  state.loadTimeout = setTimeout(() => {
+    fadeOutSkeleton(state, 600);
+
+    setTimeout(() => {
+      loadModel(state, state.config.models[0]);
+      if (activeTargetState === state) {
+        scanEffect.style.display = 'none';
+      }
+    }, 600);
+
+    state.loadTimeout = null;
+  }, 3000);
+};
+
+const handleTargetLost = (state) => {
+  if (!state.isVisible && !state.currentModel && !state.skeletonModel && !state.infoPanel) return;
+
+  state.isVisible = false;
+  clearTargetModels(state);
+  hideTargetUi(state);
+  updateStatus('Buscando imagen objetivo...');
+};
+
+const forceTargetLost = (state) => {
+  handleTargetLost(state);
+  state.anchor.group.visible = false;
+};
+
+const setArLayerVisible = (isVisible) => {
+  if (!renderer || !renderer.domElement) return;
+
+  renderer.domElement.style.visibility = isVisible ? 'visible' : 'hidden';
+};
+
+const clearArFrame = () => {
+  if (!renderer) return;
+
+  renderer.clear(true, true, true);
+};
+
 const setupTarget = (state) => {
   state.anchor.onTargetFound = () => {
-    state.isVisible = true;
-    showTargetUi(state);
-    updateStatus('Target de ' + state.config.statusLabel + ' detectado.');
-
-    if (!state.infoPanel) {
-      state.infoPanel = createInfoPanel(state.config);
-      state.anchor.group.add(state.infoPanel);
-    }
-
-    scanEffect.style.display = 'block';
-
-    if (state.loadTimeout || state.currentModel || state.skeletonModel) return;
-
-    loadSkeleton(state).catch((error) => {
-      console.error('Error al cargar skeleton:', error);
-      updateStatus('No se pudo cargar el placeholder de ' + state.config.statusLabel + '.');
-    });
-
-    state.loadTimeout = setTimeout(() => {
-      fadeOutSkeleton(state, 600);
-
-      setTimeout(() => {
-        loadModel(state, state.config.models[0]);
-        if (activeTargetState === state) {
-          scanEffect.style.display = 'none';
-        }
-      }, 600);
-
-      state.loadTimeout = null;
-    }, 3000);
+    handleTargetFound(state);
   };
 
   state.anchor.onTargetLost = () => {
-    state.isVisible = false;
-    clearTargetModels(state);
-    hideTargetUi(state);
-    updateStatus('Buscando imagen objetivo...');
+    handleTargetLost(state);
   };
 };
 
@@ -553,15 +591,15 @@ const stopAR = () => {
 
   isTransitioning = true;
   startButton.disabled = true;
+
+  targetStates.forEach(forceTargetLost);
+  activeTargetState = null;
+  clearArFrame();
+  setArLayerVisible(false);
+
   renderer.setAnimationLoop(null);
   mindarThree.stop();
   started = false;
-
-  targetStates.forEach((state) => {
-    state.isVisible = false;
-    clearTargetModels(state);
-  });
-  activeTargetState = null;
 
   scanEffect.style.display = 'none';
   uiScanning.style.display = 'none';
@@ -583,8 +621,8 @@ const startAR = async () => {
   isTransitioning = true;
   setControlState('starting');
   updateStatus('Solicitando acceso a la camara...');
-  uiLoading.style.display = 'none';
-  uiCamera.style.display = 'block';
+  uiLoading.style.display = 'grid';
+  uiCamera.style.display = 'none';
 
   try {
     if (!mindarThree) {
@@ -602,7 +640,9 @@ const startAR = async () => {
       setupScene();
     }
 
+    setArLayerVisible(true);
     await mindarThree.start();
+    uiLoading.style.display = 'none';
     uiCamera.style.display = 'none';
     uiScanning.style.display = 'block';
     updateStatus('Buscando imagen objetivo...');
@@ -613,6 +653,12 @@ const startAR = async () => {
       if (!started) return;
 
       targetStates.forEach((state) => {
+        if (state.anchor.group.visible && !state.isVisible) {
+          handleTargetFound(state);
+        } else if (!state.anchor.group.visible && state.isVisible) {
+          handleTargetLost(state);
+        }
+
         if (state.infoPanel) {
           state.infoPanel.lookAt(camera.position);
         }
