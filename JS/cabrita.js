@@ -23,8 +23,7 @@ let scene;
 let camera;
 let reticle;
 let xrSession = null;
-let hitTestSource = null;
-let hitTestSourceRequested = false;
+let xrRefSpace = null;
 let currentModel = null;
 let pendingPlacementMatrix = null;
 let started = false;
@@ -190,7 +189,7 @@ const loadModel = () => {
   });
 };
 
-const placeModel = (matrix, mode = 'hit-test') => {
+const placeModel = (matrix, mode = 'plane') => {
   if (!currentModel) {
     pendingPlacementMatrix = {
       matrix: matrix.clone(),
@@ -286,51 +285,22 @@ const getPlanePlacementMatrix = (frame, referenceSpace) => {
   return null;
 };
 
-const requestHitTestSource = (session) => {
-  if (hitTestSourceRequested) return;
-
-  session.requestReferenceSpace('viewer').then((viewerSpace) => {
-    session.requestHitTestSource({ space: viewerSpace }).then((source) => {
-      hitTestSource = source;
-    });
-  }).catch((error) => {
-    console.warn('No se pudo iniciar hit-test:', error);
-  });
-
-  hitTestSourceRequested = true;
-};
-
-const getHitTestPlacementMatrix = (frame, referenceSpace) => {
-  if (!hitTestSource) return null;
-
-  const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-  if (hitTestResults.length === 0) return null;
-
-  const pose = hitTestResults[0].getPose(referenceSpace);
-
-  if (!pose) return null;
-
-  return new THREE.Matrix4().fromArray(pose.transform.matrix);
-};
-
 const onXRFrame = (timestamp, frame) => {
   if (!frame) return;
 
-  const referenceSpace = renderer.xr.getReferenceSpace();
-  const session = renderer.xr.getSession();
+  if (xrSession) {
+    xrSession.requestAnimationFrame(onXRFrame);
+  }
 
-  requestHitTestSource(session);
+  const referenceSpace = xrRefSpace || renderer.xr.getReferenceSpace();
 
   if (!modelPlaced) {
     const planeMatrix = getPlanePlacementMatrix(frame, referenceSpace);
-    const hitTestMatrix = planeMatrix || getHitTestPlacementMatrix(frame, referenceSpace);
-    const placementMode = planeMatrix ? 'plane' : 'hit-test';
 
-    if (hitTestMatrix) {
+    if (planeMatrix) {
       reticle.visible = true;
-      reticle.matrix.copy(hitTestMatrix);
-      placeModel(hitTestMatrix, placementMode);
+      reticle.matrix.copy(planeMatrix);
+      placeModel(planeMatrix, 'plane');
     } else {
       reticle.visible = false;
     }
@@ -340,11 +310,8 @@ const onXRFrame = (timestamp, frame) => {
 };
 
 const onSessionEnded = () => {
-  renderer.setAnimationLoop(null);
-
   xrSession = null;
-  hitTestSource = null;
-  hitTestSourceRequested = false;
+  xrRefSpace = null;
   started = false;
 
   if (reticle) {
@@ -402,7 +369,6 @@ const startAR = async () => {
     pendingPlacementMatrix = null;
 
     xrSession = await navigator.xr.requestSession('immersive-ar', {
-      requiredFeatures: ['hit-test'],
       optionalFeatures: ['dom-overlay', 'plane-detection'],
       domOverlay: { root: document.body }
     });
@@ -410,11 +376,12 @@ const startAR = async () => {
     xrSession.addEventListener('end', onSessionEnded);
     renderer.xr.setReferenceSpaceType('local');
     await renderer.xr.setSession(xrSession);
+    xrRefSpace = await xrSession.requestReferenceSpace('local');
 
     started = true;
     setControlState('active');
     showScanningUi();
-    renderer.setAnimationLoop(onXRFrame);
+    xrSession.requestAnimationFrame(onXRFrame);
   } catch (error) {
     console.error(error);
     updateStatus('No se pudo iniciar AR. Usa Chrome Android con HTTPS o localhost y acepta permisos de camara.');
