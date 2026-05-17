@@ -1,86 +1,66 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agricultura Urbana AR</title>
-  <link rel="stylesheet" href="./Styles/index.css">
-</head>
-<body>
-  <main class="poster-shell">
-    <section class="hero-panel" aria-labelledby="main-title">
-      <header class="topbar">
-        <div class="brand-slot brand-slot-wide">
-          <img src="./Assets/img/logouniA.png" alt="Universidad de los Andes">
-          <p>Universidad de<br><strong>los Andes</strong></p>
-        </div>
-      </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agricultura Urbana AR</title>
 
-      <div class="title-block">
-        <p class="eyebrow">Agricultura</p>
-        <h1 id="main-title">Urbana</h1>
-        <p class="subtitle">Cultivos sostenibles en el <strong>coraz&oacute;n de la ciudad</strong></p>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <link rel="stylesheet" href="Styles/Design1.css">
+  </head>
+  <body>
+    <div id="ar-container">
+      <div id="scan-effect"></div>
+    </div>
+
+    <div class="hud">
+      <section class="panel controls status">
+        <button id="start-ar" class="camera-toggle" type="button" data-state="idle">
+          <img class="camera-icon" src="Assets/svg/camera-ON.svg" alt="">
+          <span class="button-divider" aria-hidden="true"></span>
+          <span class="camera-label">Iniciar c&aacute;mara AR</span>
+        </button>
+
+        <div class="tap-hint" aria-hidden="true">
+          <img src="Assets/svg/arrow2.svg" alt="">
+          <p><strong>Toca aqu&iacute; para iniciar</strong><br>la experiencia AR</p>
+        </div>
+      </section>
+    </div>
+
+    <div id="ui-loading">
+      <div class="scanner-badge">
+        <img src="Assets/svg/food-hot.svg" alt="">
+      </div>
+      <h1>Listo para comenzar</h1>
+      <span class="loading-line"></span>
+      <p id="status-text">Activa tu c&aacute;mara para escanear el entorno y descubrir cultivos urbanos.</p>
+    </div>
+
+    <div id="ar-ui">
+      <button id="btn-change"><span>COMER</span></button>
+
+      <div id="ui-camera" class="ar-state" style="display:none;">
+        Por favor permite el acceso a la c&aacute;mara
       </div>
 
+      <div id="ui-scanning" class="ar-state" style="display:none;">
+        Busca la imagen objetivo con la c&aacute;mara
+      </div>
 
-      <a class="start-button" href="tests/TestNatalia.html">
-        <img class="button-icon" src="./Assets/svg/hoja.svg" alt="">
-        <span>Comenzar experiencia AR</span>
-        <img class="button-arrow" src="./Assets/svg/arrow.svg" alt="">
-      </a>
+      <div id="ui-detected" class="ar-state" style="display:none;">
+        &iexcl;Target detectado!
+      </div>
+    </div>
 
-      <section class="main-scene" aria-label="Presentacion principal">
-        <article class="intro-card">
-          <span class="orb-icon">
-            <img src="./Assets/svg/hoja.svg" alt="">
-          </span>
-          <h2>Transforma cualquier <strong>espacio en vida.</strong></h2>
-          <p>Cultiva hoy,<br>cosecha un ma&ntilde;ana mejor.</p>
-        </article>
-          <div class="goat-placeholder">
-          <img src="./Assets/img/Cabra.png" alt="Cabra guia de la experiencia AR">
-        </div>
-      </section>
-
-      <section class="benefits" aria-label="Beneficios">
-        <article class="benefit-card">
-          <img class="benefit-icon" src="./Assets/svg/tierra.svg" alt="">
-          <h3>Sostenible</h3>
-          <p>Cuida el planeta desde casa</p>
-        </article>
-        <article class="benefit-card">
-          <img class="benefit-icon" src="./Assets/svg/planta.svg" alt="">
-          <h3>Saludable</h3>
-          <p>Alimentos frescos y nutritivos</p>
-        </article>
-        <article class="benefit-card">
-          <img class="benefit-icon" src="./Assets/svg/casa.svg" alt="">
-          <h3>Accesible</h3>
-          <p>Cualquier espacio puede ser tu huerto</p>
-        </article>
-        <article class="benefit-card">
-          <img class="benefit-icon" src="./Assets/svg/corazon.svg" alt="">
-          <h3>Bienestar</h3>
-          <p>Cultivar mejora tu vida</p>
-        </article>
-      </section>
-
-      <section class="ar-card" aria-label="Experiencia AR">
-        <div class="phone-slot">
-          <img src="./Assets/img/Celu.png" alt="Vista previa de la experiencia en celular">
-        </div>
-        <div class="ar-copy">
-          <p>Experiencia AR</p>
-          <h2>Visualiza, aprende y cultiva con <strong>realidad aumentada.</strong></h2>
-        </div>
-      </section>
-
-      <footer class="poster-footer">
-        <span></span>
-        <p>Descubre. Aprende. <strong>Cultiva.</strong></p>
-        <span></span>
-      </footer>
-    </section>
-  </main>
-</body>
+    <script type="module" src="JS/cabrita.js"></script>
+  </body>
 </html>
