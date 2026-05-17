@@ -3,64 +3,153 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agricultura Urbana AR</title>
+    <title>Cabrita AR</title>
 
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-      }
+    <script
+      type="module"
+      src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
     </script>
 
-    <link rel="stylesheet" href="Styles/Design1.css">
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #020b08;
+        --green: #a6ff4d;
+        --green-soft: #d8ff8e;
+        --text: #f8fff4;
+        --muted: #dbe8dc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        font-family: Arial, Helvetica, sans-serif;
+        color: var(--text);
+        background:
+          linear-gradient(180deg, rgba(1, 9, 8, 0.32), rgba(1, 10, 8, 0.88)),
+          radial-gradient(circle at 50% 24%, rgba(132, 255, 70, 0.18), transparent 28rem),
+          url("Assets/img/fondoS.png") center top / cover no-repeat,
+          var(--bg);
+      }
+
+      .app {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-height: 100vh;
+        padding: clamp(18px, 4vw, 42px);
+      }
+
+      header {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        text-shadow: 0 0 22px rgba(166, 255, 77, 0.35);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 8vw, 4rem);
+        line-height: 1;
+      }
+
+      p {
+        max-width: 560px;
+        margin: 12px auto 0;
+        color: var(--muted);
+        font-size: clamp(1rem, 3vw, 1.25rem);
+        line-height: 1.45;
+      }
+
+      model-viewer {
+        width: 100%;
+        height: min(70vh, 760px);
+        align-self: center;
+        background: transparent;
+      }
+
+      .ar-button {
+        display: grid;
+        grid-template-columns: 42px 1px 1fr;
+        align-items: center;
+        gap: 16px;
+        width: min(88vw, 520px);
+        min-height: 72px;
+        padding: 10px 22px;
+        border: 2px solid var(--green-soft);
+        border-radius: 999px;
+        color: #06140b;
+        background: linear-gradient(180deg, #d8ff78, #7ed729);
+        box-shadow:
+          0 0 0 10px rgba(166, 255, 77, 0.12),
+          0 0 30px rgba(137, 255, 70, 0.58),
+          inset 0 2px 0 rgba(255, 255, 255, 0.58);
+        font-size: clamp(1.2rem, 5vw, 2rem);
+        font-weight: 900;
+        text-align: left;
+      }
+
+      .ar-button img {
+        width: 38px;
+        height: 38px;
+        object-fit: contain;
+      }
+
+      .divider {
+        width: 1px;
+        height: 42px;
+        background: rgba(4, 35, 12, 0.5);
+      }
+
+      footer {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        justify-items: center;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+      }
+
+      .hint {
+        margin-top: 14px;
+        color: var(--green-soft);
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
-    <div id="ar-container">
-      <div id="scan-effect"></div>
-    </div>
+    <main class="app">
+      <header>
+        <h1>Cabrita AR</h1>
+        <p>Prueba simple con model-viewer para colocar la cabrita sobre una superficie.</p>
+      </header>
 
-    <div class="hud">
-      <section class="panel controls status">
-        <button id="start-ar" class="camera-toggle" type="button" data-state="idle">
-          <img class="camera-icon" src="Assets/svg/camera-ON.svg" alt="">
-          <span class="button-divider" aria-hidden="true"></span>
-          <span class="camera-label">Iniciar c&aacute;mara AR</span>
+      <model-viewer
+        src="Assets/cabritaS.glb"
+        alt="Cabrita en realidad aumentada"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        ar-placement="floor"
+        camera-controls
+        auto-rotate
+        shadow-intensity="1"
+        exposure="1"
+        interaction-prompt="auto">
+        <button class="ar-button" slot="ar-button" type="button">
+          <img src="Assets/svg/camera-ON.svg" alt="">
+          <span class="divider" aria-hidden="true"></span>
+          <span>Ver cabrita en AR</span>
         </button>
+      </model-viewer>
 
-        <div class="tap-hint" aria-hidden="true">
-          <img src="Assets/svg/arrow2.svg" alt="">
-          <p><strong>Toca aqu&iacute; para iniciar</strong><br>la experiencia AR</p>
-        </div>
-      </section>
-    </div>
-
-    <div id="ui-loading">
-      <div class="scanner-badge">
-        <img src="Assets/svg/food-hot.svg" alt="">
-      </div>
-      <h1>Listo para comenzar</h1>
-      <span class="loading-line"></span>
-      <p id="status-text">Activa tu c&aacute;mara para escanear el entorno y descubrir cultivos urbanos.</p>
-    </div>
-
-    <div id="ar-ui">
-      <button id="btn-change"><span>COMER</span></button>
-
-      <div id="ui-camera" class="ar-state" style="display:none;">
-        Por favor permite el acceso a la c&aacute;mara
-      </div>
-
-      <div id="ui-scanning" class="ar-state" style="display:none;">
-        Busca la imagen objetivo con la c&aacute;mara
-      </div>
-
-      <div id="ui-detected" class="ar-state" style="display:none;">
-        &iexcl;Target detectado!
-      </div>
-    </div>
-
-    <script type="module" src="JS/cabrita.js"></script>
+      <footer>
+        <div class="hint">En Android compatible, toca el boton y apunta a una mesa o al piso.</div>
+      </footer>
+    </main>
   </body>
 </html>
