@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cabrita AR - model-viewer</title>
+    <title>Química con Séneca - AR</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;900&display=swap" rel="stylesheet">
 
     <script
       type="module"
@@ -15,9 +19,10 @@
         color-scheme: dark;
         --bg: #020b08;
         --green: #a6ff4d;
+        --green-bright: #6fff00; /* Verde neón para resaltar palabras clave */
         --green-soft: #d8ff8e;
-        --text: #f8fff4;
-        --muted: #dbe8dc;
+        --text: #ffffff;
+        --muted: #b6caba; /* Color un poco más suave para el subtítulo pequeño */
       }
 
       * {
@@ -27,13 +32,13 @@
       body {
         margin: 0;
         min-height: 100vh;
-        overflow: hidden;
-        font-family: Arial, Helvetica, sans-serif;
+        overflow-x: hidden;
+        font-family: 'Rajdhani', sans-serif;
         color: var(--text);
         background:
-          linear-gradient(180deg, rgba(1, 9, 8, 0.32), rgba(1, 10, 8, 0.88)),
-          radial-gradient(circle at 50% 24%, rgba(132, 255, 70, 0.18), transparent 28rem),
-          url("Assets/img/fondoS.png") center top / cover no-repeat,
+          linear-gradient(180deg, rgba(1, 9, 8, 0.2), rgba(1, 10, 8, 0.9)),
+          radial-gradient(circle at 50% 30%, rgba(132, 255, 70, 0.15), transparent 35rem),
+          url("Assets/img/backg.png") center top / cover no-repeat,
           var(--bg);
       }
 
@@ -41,95 +46,143 @@
         display: grid;
         grid-template-rows: auto 1fr auto;
         min-height: 100vh;
-        padding: clamp(18px, 4vw, 42px);
+        padding: clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px);
       }
 
       header {
         position: relative;
         z-index: 2;
         text-align: center;
-        text-shadow: 0 0 22px rgba(166, 255, 77, 0.35);
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* Contenedor Flex para alinear el SVG y el Título lado a lado */
+      .brand-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px; /* Espacio entre el matraz y el texto */
+        margin-bottom: 12px;
+      }
+
+      .brand-logo {
+        width: clamp(60px, 15vw, 85px); /* Tamaño responsivo para el SVG del matraz */
+        height: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 0 12px rgba(111, 255, 0, 0.5)); /* Efecto de brillo neón al SVG */
       }
 
       h1 {
         margin: 0;
-        font-size: clamp(2rem, 8vw, 4rem);
-        line-height: 1;
+        font-size: clamp(2.3rem, 8.5vw, 3.8rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: 0.5px;
+        text-align: left; /* Alineado a la izquierda respecto al logo */
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
       }
 
+      h1 span {
+        display: block;
+      }
+      
+      h1 .destacado {
+        font-weight: 900;
+        color: var(--green-bright);
+        text-shadow: 0 0 20px rgba(111, 255, 0, 0.4);
+      }
+
+      /* Subtítulo más pequeño y estilizado */
       p {
-        max-width: 560px;
-        margin: 12px auto 0;
+        max-width: 440px;
+        margin: 8px auto 0;
         color: var(--muted);
-        font-size: clamp(1rem, 3vw, 1.25rem);
-        line-height: 1.45;
+        font-size: clamp(0.95rem, 3vw, 1.15rem); /* Reducido para que se vea más fino */
+        font-weight: 500;
+        line-height: 1.35;
+        text-wrap: balance;
+        opacity: 0.9;
       }
 
       model-viewer {
         width: 100%;
-        height: min(70vh, 760px);
+        height: min(55vh, 600px);
         align-self: center;
         background: transparent;
+        margin: 10px 0;
       }
 
+      /* Botón Principal (Ver cabrita en AR) */
       .ar-button {
-        display: grid;
-        grid-template-columns: 42px 1px 1fr;
+        display: flex;
         align-items: center;
+        justify-content: center;
         gap: 16px;
-        width: min(88vw, 520px);
-        min-height: 72px;
-        padding: 10px 22px;
-        border: 2px solid var(--green-soft);
+        width: min(90vw, 420px);
+        min-height: 68px;
+        margin: 0 auto;
+        padding: 10px 24px;
+        border: 2px solid #bdfc5d;
         border-radius: 999px;
-        color: #06140b;
-        background: linear-gradient(180deg, #d8ff78, #7ed729);
+        color: #041407;
+        background: linear-gradient(180deg, #b0ff38, #5fc211);
         box-shadow:
-          0 0 0 10px rgba(166, 255, 77, 0.12),
-          0 0 30px rgba(137, 255, 70, 0.58),
-          inset 0 2px 0 rgba(255, 255, 255, 0.58);
-        font-size: clamp(1.2rem, 5vw, 2rem);
-        font-weight: 900;
-        text-align: left;
+          0 0 0 8px rgba(111, 255, 0, 0.15),
+          0 10px 25px rgba(95, 194, 17, 0.4),
+          inset 0 2px 2px rgba(255, 255, 255, 0.6);
+        font-family: 'Rajdhani', sans-serif;
+        font-size: clamp(1.4rem, 5.5vw, 1.8rem);
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .ar-button:active {
+        transform: scale(0.97);
       }
 
       .ar-button img {
-        width: 38px;
-        height: 38px;
+        width: 32px;
+        height: 32px;
         object-fit: contain;
+      }
+
+      .divider {
+        width: 1px;
+        height: 32px;
+        background: rgba(4, 20, 7, 0.25);
       }
 
       .action-row {
         display: flex;
         justify-content: center;
-        margin-top: -18px;
-        margin-bottom: 12px;
+        margin-top: 20px;
+        margin-bottom: 10px;
       }
 
+      /* Botón Inferior (Cambiar reactivo) */
       .eat-button {
-        min-width: 190px;
-        min-height: 54px;
+        min-width: 260px;
+        min-height: 52px;
         padding: 0 32px;
-        border: 2px solid var(--green);
+        border: 2px solid #52a11b;
         border-radius: 999px;
-        color: var(--green-soft);
-        background: rgba(2, 18, 14, 0.72);
+        color: #bdfc5d;
+        background: linear-gradient(180deg, rgba(2, 20, 12, 0.85), rgba(1, 12, 7, 0.95));
         box-shadow:
-          0 0 18px rgba(166, 255, 77, 0.55),
-          inset 0 0 18px rgba(166, 255, 77, 0.12);
-        font-size: 1rem;
-        font-weight: 900;
-        letter-spacing: 3px;
+          0 0 15px rgba(111, 255, 0, 0.25),
+          inset 0 0 12px rgba(111, 255, 0, 0.15);
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: transform 0.2s;
       }
 
       .eat-button:active {
         transform: scale(0.98);
-      }
-
-      .divider {
-        width: 1px;
-        height: 42px;
-        background: rgba(4, 35, 12, 0.5);
       }
 
       footer {
@@ -141,19 +194,30 @@
       }
 
       .hint {
-        margin-top: 14px;
-        color: var(--green-soft);
+        margin-top: 10px;
+        color: #72aa74;
         font-size: 0.95rem;
-        font-weight: 700;
+        font-weight: 600;
         text-align: center;
+        max-width: 80%;
       }
     </style>
   </head>
   <body>
     <main class="app">
       <header>
-        <h1>Cabrita AR</h1>
-        <p>Prueba simple con model-viewer para colocar la cabrita sobre una superficie.</p>
+        <div class="brand-container">
+          <img src="Assets/svg/ender.svg" class="brand-logo" alt="Matraz Erlenmeyer Logo" />
+          <h1>
+            <span>Química</span> 
+            <span class="destacado">con Séneca</span>
+          </h1>
+        </div>
+        
+        <p>
+          Explora conceptos de química en realidad aumentada. 
+          Interactúa con modelos y experimentos de forma dinámica.
+        </p>
       </header>
 
       <model-viewer
@@ -169,7 +233,7 @@
         exposure="1"
         interaction-prompt="auto">
         <button class="ar-button" slot="ar-button" type="button">
-          <img src="Assets/svg/camera-ON.svg" alt="">
+          <img src="Assets/svg/camera-ON.svg" alt="Icono Cámara">
           <span class="divider" aria-hidden="true"></span>
           <span>Ver cabrita en AR</span>
         </button>
@@ -180,7 +244,7 @@
       </div>
 
       <footer>
-        <div id="status-text" class="hint">En Android compatible, toca el boton y apunta a una mesa o al piso.</div>
+        <div id="status-text" class="hint">En Android compatible, toca el botón superior para iniciar la experiencia.</div>
       </footer>
     </main>
 
@@ -218,8 +282,8 @@
             ? viewer.model.materials.map((item) => item.name).join(', ')
             : 'modelo no cargado';
 
-          console.warn('No encontre el material de liquid. Materiales disponibles:', names);
-          statusText.textContent = 'No encontre el material de liquid. Revisa el nombre del material en consola.';
+          console.warn('No encontré el material de liquid. Materiales disponibles:', names);
+          statusText.textContent = 'No encontré el material líquido. Revisa la consola.';
           return;
         }
 
