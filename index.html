@@ -202,9 +202,10 @@
       const findLiquidMaterial = () => {
         if (!viewer.model) return null;
 
-        return viewer.model.materials.find((material) => {
-          return material.name === 'liquid' || material.name.toLowerCase().includes('liquid');
-        });
+        return viewer.model.materials.find((material) => material.name === 'Material')
+          || viewer.model.materials.find((material) => material.name === 'liquid')
+          || viewer.model.materials.find((material) => material.name.toLowerCase().includes('liquid'))
+          || viewer.model.materials[1];
       };
 
       changeButton.addEventListener('click', async () => {
@@ -217,14 +218,14 @@
             ? viewer.model.materials.map((item) => item.name).join(', ')
             : 'modelo no cargado';
 
-          console.warn('No encontre el material liquid. Materiales disponibles:', names);
-          statusText.textContent = 'No encontre el material liquid. Revisa el nombre del material en consola.';
+          console.warn('No encontre el material de liquid. Materiales disponibles:', names);
+          statusText.textContent = 'No encontre el material de liquid. Revisa el nombre del material en consola.';
           return;
         }
 
         colorIndex = (colorIndex + 1) % colors.length;
         material.pbrMetallicRoughness.setBaseColorFactor(colors[colorIndex]);
-        statusText.textContent = 'Color del material liquid cambiado.';
+        statusText.textContent = 'Color cambiado en ' + material.name + '.';
       });
     </script>
   </body>
