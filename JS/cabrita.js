@@ -1,4 +1,5 @@
-import * as THREE from 'three';
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import { MindARThree } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const container = document.querySelector('#ar-container');
@@ -15,21 +16,22 @@ const uiScanning = document.querySelector('#ui-scanning');
 const uiDetected = document.querySelector('#ui-detected');
 const loadingTitle = uiLoading.querySelector('h1');
 
-const gltfLoader = new GLTFLoader();
 const eatSound = new Audio('Assets/bubbles.mp3');
+const gltfLoader = new GLTFLoader();
 
+let started = false;
+let mindarThree;
 let renderer;
 let scene;
 let camera;
-let xrSession = null;
-let hitTestSource = null;
-let hitTestSourceRequested = false;
-let reticle;
+let sceneReady = false;
 let currentModel = null;
-let pendingPlacementMatrix = null;
-let started = false;
-let modelPlaced = false;
+let anchor;
 let isTransitioning = false;
+
+const models = [
+  'Assets/cabritaS.glb'
+];
 
 const colors = [
   0x00ff66,
@@ -91,37 +93,20 @@ const setControlState = (state) => {
   document.body.classList.remove('ar-active', 'ar-paused', 'ar-starting');
 };
 
-const setUiForScanning = () => {
-  uiLoading.style.display = 'none';
-  uiCamera.style.display = 'none';
-  uiDetected.style.display = 'none';
-  uiScanning.style.display = 'block';
-  changeButton.style.display = 'none';
-  scanEffect.style.display = 'block';
-  updateStatus('Mueve lentamente la camara para detectar una superficie plana.');
+const setArLayerVisible = (isVisible) => {
+  if (!renderer || !renderer.domElement) return;
+
+  renderer.domElement.style.visibility = isVisible ? 'visible' : 'hidden';
 };
 
-const setUiForPlacedModel = () => {
-  uiLoading.style.display = 'none';
-  uiCamera.style.display = 'none';
-  uiScanning.style.display = 'none';
-  uiDetected.style.display = 'block';
-  uiDetected.textContent = 'Superficie detectada: cabrita colocada';
-  changeButton.style.display = 'block';
-  scanEffect.style.display = 'none';
-  updateStatus('La cabrita quedo fija en la superficie detectada.');
+const clearArFrame = () => {
+  if (!renderer) return;
+
+  renderer.clear(true, true, true);
 };
 
 const setupScene = () => {
-  if (renderer) return;
-
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(
-    70,
-    window.innerWidth / window.innerHeight,
-    0.01,
-    30
-  );
+  if (sceneReady) return;
 
   const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x7a8ca5, 1.4);
   scene.add(hemisphereLight);
@@ -130,83 +115,27 @@ const setupScene = () => {
   directionalLight.position.set(1, 2, 1.5);
   scene.add(directionalLight);
 
-  renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: true
-  });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.xr.enabled = true;
-  renderer.autoClear = true;
-  renderer.domElement.style.position = 'fixed';
-  renderer.domElement.style.inset = '0';
-  renderer.domElement.style.width = '100%';
-  renderer.domElement.style.height = '100%';
-  container.appendChild(renderer.domElement);
+  anchor = mindarThree.addAnchor(0);
 
-  const reticleGeometry = new THREE.RingGeometry(0.12, 0.16, 32).rotateX(-Math.PI / 2);
-  const reticleMaterial = new THREE.MeshBasicMaterial({
-    color: 0xa6ff4d,
-    transparent: true,
-    opacity: 0.9
-  });
+  anchor.onTargetFound = () => {
+    uiScanning.style.display = 'none';
+    uiDetected.style.display = 'block';
+    uiDetected.textContent = 'Target detectado: CABRITA';
+    changeButton.style.display = 'block';
+    scanEffect.style.display = 'block';
+    updateStatus('Target de cabrita detectado.');
+  };
 
-  reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
-  reticle.matrixAutoUpdate = false;
-  reticle.visible = false;
-  scene.add(reticle);
+  anchor.onTargetLost = () => {
+    uiDetected.style.display = 'none';
+    uiScanning.style.display = 'block';
+    changeButton.style.display = 'none';
+    scanEffect.style.display = 'none';
+    updateStatus('Buscando imagen objetivo...');
+  };
 
-  window.addEventListener('resize', resizeRenderer);
-};
-
-const resizeRenderer = () => {
-  if (!renderer || !camera) return;
-
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-};
-
-const loadModel = () => {
-  return new Promise((resolve, reject) => {
-    gltfLoader.load('Assets/cabritaS.glb', (gltf) => {
-      currentModel = gltf.scene;
-
-      currentModel.scale.set(1.6, 1.6, 1.6);
-      currentModel.position.set(0, 0, 0);
-      currentModel.rotation.set(0, 0, 0);
-      currentModel.visible = false;
-      scene.add(currentModel);
-
-      if (pendingPlacementMatrix) {
-        placeModel(pendingPlacementMatrix);
-        pendingPlacementMatrix = null;
-      }
-
-      resolve(currentModel);
-    }, undefined, reject);
-  });
-};
-
-const placeModel = (matrix) => {
-  if (!currentModel) {
-    pendingPlacementMatrix = matrix.clone();
-    return;
-  }
-
-  currentModel.matrix.fromArray(matrix.elements);
-  currentModel.matrix.decompose(
-    currentModel.position,
-    currentModel.quaternion,
-    currentModel.scale
-  );
-  currentModel.scale.set(1.6, 1.6, 1.6);
-  currentModel.position.y -= 0.02;
-  currentModel.visible = true;
-
-  modelPlaced = true;
-  reticle.visible = false;
-  setUiForPlacedModel();
+  loadModel(models[0]);
+  sceneReady = true;
 };
 
 const createParticles = (position) => {
@@ -238,7 +167,7 @@ const createParticles = (position) => {
     );
     bubble.userData.offset = Math.random() * Math.PI * 2;
 
-    scene.add(bubble);
+    anchor.group.add(bubble);
     particles.push(bubble);
   }
 
@@ -251,7 +180,7 @@ const createParticles = (position) => {
       particle.material.opacity *= 0.993;
 
       if (particle.material.opacity < 0.03) {
-        scene.remove(particle);
+        anchor.group.remove(particle);
         particle.geometry.dispose();
         particle.material.dispose();
         particles.splice(index, 1);
@@ -266,67 +195,36 @@ const createParticles = (position) => {
   animateParticles();
 };
 
-const onXRFrame = (timestamp, frame) => {
-  if (!frame) return;
+const loadModel = (path) => {
+  gltfLoader.load(path, (gltf) => {
+    currentModel = gltf.scene;
 
-  const referenceSpace = renderer.xr.getReferenceSpace();
-  const session = renderer.xr.getSession();
+    currentModel.scale.set(1.6, 1.6, 1.6);
+    currentModel.position.set(0, -0.6, 0);
+    currentModel.rotation.set(0, 0, 0);
 
-  if (!hitTestSourceRequested) {
-    session.requestReferenceSpace('viewer').then((viewerSpace) => {
-      session.requestHitTestSource({ space: viewerSpace }).then((source) => {
-        hitTestSource = source;
-      });
-    });
-
-    session.addEventListener('end', () => {
-      hitTestSourceRequested = false;
-      hitTestSource = null;
-    });
-
-    hitTestSourceRequested = true;
-  }
-
-  if (hitTestSource && !modelPlaced) {
-    const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-    if (hitTestResults.length > 0) {
-      const hit = hitTestResults[0];
-      const pose = hit.getPose(referenceSpace);
-
-      if (pose) {
-        const placementMatrix = new THREE.Matrix4().fromArray(pose.transform.matrix);
-        reticle.visible = true;
-        reticle.matrix.copy(placementMatrix);
-        placeModel(placementMatrix);
-      }
-    } else {
-      reticle.visible = false;
-    }
-  }
-
-  renderer.render(scene, camera);
+    anchor.group.add(currentModel);
+  }, undefined, (error) => {
+    console.error('Error al cargar el modelo:', error);
+    updateStatus('No se pudo cargar el modelo de cabrita.');
+  });
 };
 
-const stopAR = async () => {
-  if (!started || !xrSession || isTransitioning) return;
+const stopAR = () => {
+  if (!started || !mindarThree || isTransitioning) return;
 
   isTransitioning = true;
   startButton.disabled = true;
-  await xrSession.end();
-};
-
-const onSessionEnded = () => {
   renderer.setAnimationLoop(null);
-
-  xrSession = null;
-  hitTestSource = null;
-  hitTestSourceRequested = false;
+  mindarThree.stop();
   started = false;
 
-  if (reticle) {
-    reticle.visible = false;
+  if (anchor) {
+    anchor.group.visible = false;
   }
+
+  clearArFrame();
+  setArLayerVisible(false);
 
   uiScanning.style.display = 'none';
   uiDetected.style.display = 'none';
@@ -347,51 +245,50 @@ const startAR = async () => {
   setControlState('starting');
   updateStatus('Solicitando acceso a la camara...');
   uiLoading.style.display = 'grid';
+  uiCamera.style.display = 'none';
 
   try {
-    if (!navigator.xr) {
-      throw new Error('WebXR no esta disponible en este navegador.');
+    if (!mindarThree) {
+      mindarThree = new MindARThree({
+        container,
+        imageTargetSrc: 'Assets/Targets/targets.mind',
+        uiScanning: false,
+        uiLoading: false,
+        maxTrack: 1,
+        filterMinCF: 0.0001,
+        filterBeta: 0.01
+      });
+
+      ({ renderer, scene, camera } = mindarThree);
+      setupScene();
     }
 
-    const isSupported = await navigator.xr.isSessionSupported('immersive-ar');
+    setArLayerVisible(true);
+    await mindarThree.start();
 
-    if (!isSupported) {
-      throw new Error('Este navegador no soporta AR inmersiva.');
-    }
-
-    setupScene();
-
-    if (!currentModel) {
-      await loadModel();
-    }
-
-    modelPlaced = false;
-    currentModel.visible = false;
-    pendingPlacementMatrix = null;
-
-    xrSession = await navigator.xr.requestSession('immersive-ar', {
-      requiredFeatures: ['hit-test'],
-      optionalFeatures: ['dom-overlay'],
-      domOverlay: { root: document.body }
-    });
-
-    xrSession.addEventListener('end', onSessionEnded);
-    renderer.xr.setReferenceSpaceType('local');
-    await renderer.xr.setSession(xrSession);
-
+    uiLoading.style.display = 'none';
+    uiCamera.style.display = 'none';
+    uiScanning.style.display = 'block';
+    updateStatus('Buscando imagen objetivo...');
     started = true;
     setControlState('active');
-    setUiForScanning();
-    renderer.setAnimationLoop(onXRFrame);
+
+    renderer.setAnimationLoop(() => {
+      if (!started) return;
+
+      if (anchor.group.visible) {
+        if (uiDetected.style.display !== 'block') {
+          anchor.onTargetFound();
+        }
+      } else if (uiDetected.style.display === 'block') {
+        anchor.onTargetLost();
+      }
+
+      renderer.render(scene, camera);
+    });
   } catch (error) {
     console.error(error);
-    updateStatus('No se pudo iniciar AR. Usa Chrome Android con HTTPS o localhost y acepta permisos de camara.');
-    uiLoading.style.display = 'block';
-    uiCamera.style.display = 'none';
-    uiScanning.style.display = 'none';
-    uiDetected.style.display = 'none';
-    changeButton.style.display = 'none';
-    scanEffect.style.display = 'none';
+    updateStatus('No se pudo iniciar. Usa localhost y acepta permisos de camara.');
     setControlState('idle');
   } finally {
     isTransitioning = false;
@@ -408,7 +305,7 @@ startButton.addEventListener('click', () => {
 });
 
 changeButton.addEventListener('click', () => {
-  if (!currentModel || !modelPlaced) return;
+  if (!currentModel) return;
 
   eatSound.currentTime = 0;
   eatSound.play().catch(() => {});
