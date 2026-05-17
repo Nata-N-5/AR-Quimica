@@ -10,11 +10,19 @@ let controller1;
 let controller2;
 let reticle;
 let goatTemplate = null;
+let goat = null;
+let goatScale = 1.6;
+let moveMode = false;
 
 let hitTestSource = null;
 let hitTestSourceRequested = false;
 
 const info = document.querySelector('#info');
+const arControls = document.querySelector('#ar-controls');
+const moveButton = document.querySelector('#move-goat');
+const scaleDownButton = document.querySelector('#scale-down');
+const scaleUpButton = document.querySelector('#scale-up');
+const resetButton = document.querySelector('#reset-goat');
 const gltfLoader = new GLTFLoader();
 
 init();
@@ -48,13 +56,16 @@ function init() {
 
   document.body.appendChild(
     ARButton.createButton(renderer, {
-      requiredFeatures: ['hit-test']
+      requiredFeatures: ['hit-test'],
+      optionalFeatures: ['dom-overlay'],
+      domOverlay: { root: document.body }
     })
   );
 
   loadGoat();
   setupControllers();
   setupReticle();
+  setupControls();
 
   window.addEventListener('resize', onWindowResize);
 }
@@ -93,16 +104,67 @@ function setupReticle() {
   scene.add(reticle);
 }
 
+function setupControls() {
+  moveButton.addEventListener('click', () => {
+    if (!goat) return;
+
+    moveMode = !moveMode;
+    moveButton.classList.toggle('is-active', moveMode);
+
+    info.innerHTML = moveMode
+      ? '<strong>Cabrita AR</strong><br />Mueve el celular y toca para fijar la nueva posicion.'
+      : '<strong>Cabrita AR</strong><br />La cabrita quedo fija. Puedes moverla o cambiar su tamano.';
+  });
+
+  scaleDownButton.addEventListener('click', () => {
+    scaleGoat(0.85);
+  });
+
+  scaleUpButton.addEventListener('click', () => {
+    scaleGoat(1.15);
+  });
+
+  resetButton.addEventListener('click', () => {
+    if (!goat) return;
+
+    scene.remove(goat);
+    goat = null;
+    goatScale = 1.6;
+    moveMode = false;
+    arControls.style.display = 'none';
+    moveButton.classList.remove('is-active');
+    info.innerHTML = '<strong>Cabrita AR</strong><br />Toca una superficie detectada para poner la cabrita.';
+  });
+}
+
 function onSelect() {
   if (!reticle.visible || !goatTemplate) return;
 
-  const goat = goatTemplate.clone(true);
+  if (!goat) {
+    goat = goatTemplate.clone(true);
+    goat.visible = true;
+    scene.add(goat);
+    arControls.style.display = 'grid';
+  } else if (!moveMode) {
+    return;
+  }
 
+  placeGoatAtReticle();
+  moveMode = false;
+  moveButton.classList.remove('is-active');
+  info.innerHTML = '<strong>Cabrita AR</strong><br />La cabrita quedo fija. Puedes moverla o cambiar su tamano.';
+}
+
+function placeGoatAtReticle() {
   reticle.matrix.decompose(goat.position, goat.quaternion, goat.scale);
-  goat.scale.set(1.6, 1.6, 1.6);
-  goat.visible = true;
+  goat.scale.set(goatScale, goatScale, goatScale);
+}
 
-  scene.add(goat);
+function scaleGoat(multiplier) {
+  if (!goat) return;
+
+  goatScale = THREE.MathUtils.clamp(goatScale * multiplier, 0.35, 4);
+  goat.scale.set(goatScale, goatScale, goatScale);
 }
 
 function onWindowResize() {
@@ -144,6 +206,10 @@ function animate(timestamp, frame) {
       } else {
         reticle.visible = false;
       }
+    }
+
+    if (goat && moveMode && reticle.visible) {
+      placeGoatAtReticle();
     }
   }
 
