@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Cabrita AR - Hit Test</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #000;
+      }
+
+      #info {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1;
+        padding: 14px 18px;
+        color: #f8fff4;
+        text-align: center;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75);
+        pointer-events: none;
+      }
+
+      #info strong {
+        color: #a6ff4d;
+      }
+
+      #ar-controls {
+        position: fixed;
+        left: 50%;
+        bottom: max(22px, env(safe-area-inset-bottom));
+        z-index: 2;
+        display: none;
+        grid-template-columns: repeat(4, minmax(58px, auto));
+        gap: 10px;
+        transform: translateX(-50%);
+      }
+
+      #ar-controls button {
+        min-height: 48px;
+        padding: 0 14px;
+        border: 2px solid #a6ff4d;
+        border-radius: 999px;
+        color: #06140b;
+        background: linear-gradient(180deg, #d8ff78, #7ed729);
+        box-shadow: 0 0 18px rgba(166, 255, 77, 0.55);
+        font-size: 0.9rem;
+        font-weight: 900;
+      }
+
+      #ar-controls button.is-active {
+        color: #d8ff8e;
+        background: rgba(2, 18, 14, 0.8);
+      }
+
+      #ar-controls button:disabled {
+        opacity: 0.5;
+      }
+    </style>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="info">
+      <strong>Cabrita AR</strong><br />
+      Toca una superficie detectada para poner la cabrita.
+    </div>
+
+    <div id="ar-controls">
+      <button id="move-goat" type="button">Mover</button>
+      <button id="scale-down" type="button">-</button>
+      <button id="scale-up" type="button">+</button>
+      <button id="reset-goat" type="button">Quitar</button>
+    </div>
+
+    <script type="module" src="JS/cabrita.js"></script>
+  </body>
+</html>
