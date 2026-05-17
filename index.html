@@ -36,7 +36,7 @@
         font-family: 'Rajdhani', sans-serif;
         color: var(--text);
         background:
-          linear-gradient(180deg, rgba(1, 9, 8, 0.2), rgba(1, 10, 8, 0.9)),
+          linear-gradient(180deg, rgba(1, 9, 8, 0.174), rgba(1, 10, 8, 0.58)),
           radial-gradient(circle at 50% 30%, rgba(132, 255, 70, 0.15), transparent 35rem),
           url("Assets/img/backg.png") center top / cover no-repeat,
           var(--bg);
@@ -119,8 +119,8 @@
         align-items: center;
         justify-content: center;
         gap: 16px;
-        width: min(90vw, 420px);
-        min-height: 68px;
+        width: min(90vw, 320px);
+        min-height: 58px;
         margin: 0 auto;
         padding: 10px 24px;
         border: 2px solid #bdfc5d;
@@ -283,13 +283,13 @@
             : 'modelo no cargado';
 
           console.warn('No encontré el material de liquid. Materiales disponibles:', names);
-          statusText.textContent = 'No encontré el material líquido. Revisa la consola.';
+          //statusText.textContent = 'No encontré el material líquido. Revisa la consola.';
           return;
         }
 
         colorIndex = (colorIndex + 1) % colors.length;
         material.pbrMetallicRoughness.setBaseColorFactor(colors[colorIndex]);
-        statusText.textContent = 'Color cambiado en ' + material.name + '.';
+        //statusText.textContent = 'Color cambiado en ' + material.name + '.';
       });
     </script>
   </body>
