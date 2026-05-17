@@ -99,6 +99,33 @@
         object-fit: contain;
       }
 
+      .action-row {
+        display: flex;
+        justify-content: center;
+        margin-top: -18px;
+        margin-bottom: 12px;
+      }
+
+      .eat-button {
+        min-width: 190px;
+        min-height: 54px;
+        padding: 0 32px;
+        border: 2px solid var(--green);
+        border-radius: 999px;
+        color: var(--green-soft);
+        background: rgba(2, 18, 14, 0.72);
+        box-shadow:
+          0 0 18px rgba(166, 255, 77, 0.55),
+          inset 0 0 18px rgba(166, 255, 77, 0.12);
+        font-size: 1rem;
+        font-weight: 900;
+        letter-spacing: 3px;
+      }
+
+      .eat-button:active {
+        transform: scale(0.98);
+      }
+
       .divider {
         width: 1px;
         height: 42px;
@@ -130,6 +157,7 @@
       </header>
 
       <model-viewer
+        id="goat-viewer"
         src="Assets/cabritaS.glb"
         alt="Cabrita en realidad aumentada"
         ar
@@ -147,9 +175,57 @@
         </button>
       </model-viewer>
 
+      <div class="action-row">
+        <button id="change-color" class="eat-button" type="button">COMER</button>
+      </div>
+
       <footer>
-        <div class="hint">En Android compatible, toca el boton y apunta a una mesa o al piso.</div>
+        <div id="status-text" class="hint">En Android compatible, toca el boton y apunta a una mesa o al piso.</div>
       </footer>
     </main>
+
+    <script type="module">
+      const viewer = document.querySelector('#goat-viewer');
+      const changeButton = document.querySelector('#change-color');
+      const statusText = document.querySelector('#status-text');
+
+      const colors = [
+        [0, 1, 0.4, 1],
+        [1, 0, 1, 1],
+        [0, 0.8, 1, 1],
+        [1, 1, 0, 1],
+        [1, 0.4, 0, 1]
+      ];
+
+      let colorIndex = 0;
+
+      const findLiquidMaterial = () => {
+        if (!viewer.model) return null;
+
+        return viewer.model.materials.find((material) => {
+          return material.name === 'liquid' || material.name.toLowerCase().includes('liquid');
+        });
+      };
+
+      changeButton.addEventListener('click', async () => {
+        await viewer.updateComplete;
+
+        const material = findLiquidMaterial();
+
+        if (!material) {
+          const names = viewer.model
+            ? viewer.model.materials.map((item) => item.name).join(', ')
+            : 'modelo no cargado';
+
+          console.warn('No encontre el material liquid. Materiales disponibles:', names);
+          statusText.textContent = 'No encontre el material liquid. Revisa el nombre del material en consola.';
+          return;
+        }
+
+        colorIndex = (colorIndex + 1) % colors.length;
+        material.pbrMetallicRoughness.setBaseColorFactor(colors[colorIndex]);
+        statusText.textContent = 'Color del material liquid cambiado.';
+      });
+    </script>
   </body>
 </html>
